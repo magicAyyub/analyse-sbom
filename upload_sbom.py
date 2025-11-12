@@ -7,6 +7,10 @@ import requests
 import sys
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 def upload_sbom(sbom_path, api_key=None, server_url='http://localhost:8081'):
     if not Path(sbom_path).exists():
@@ -46,7 +50,7 @@ def upload_sbom(sbom_path, api_key=None, server_url='http://localhost:8081'):
             return True
         else:
             if response.status_code == 401:
-                print("Erreur 401: Vérifiez que la clé API est correcte et que l'équipe a les permissions BOM_UPLOAD")
+                print("Error 401: Check that the API key is correct and the team has BOM_UPLOAD permissions")
             return False
     except Exception as e:
         print(f"Error: {str(e)}")

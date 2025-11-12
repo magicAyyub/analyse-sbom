@@ -10,6 +10,7 @@ __pycache__/
 env/
 venv/
 .venv/
+.env
 
 # SBOM files (uncomment if you want to ignore)
 # *.json

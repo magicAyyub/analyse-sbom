@@ -1,126 +1,94 @@
 # CVE Speed
 
-Analysez vos SBOM avec Dependency-Track et Trivy.
+Analyze your SBOMs with Dependency-Track and Trivy.
 
-## 🚀 Démarrage rapide
+## Quick Start
 
 ```bash
-# 1. Lancer Dependency-Track + Trivy
 docker-compose up -d
 
-# 2. Installer les dépendances Python
 pip install -r requirements.txt
 ```
 
-Interface web: http://localhost:8080
+Web interface: http://localhost:8080
 
-## 🔑 Configuration initiale
+## Initial Configuration
 
-### 1. Créer une clé API
-1. Ouvrez http://localhost:8080
-2. Connectez-vous avec `admin` / `admin` puis **changez le mot de passe**
-3. Allez dans **Administration** → **Access Management** → **Teams**
-4. Cliquez sur l'équipe **"Administrators"**
-5. Générez une clé API en cliquant sur le **+** à droite de "API Keys"
-6. Copiez la clé (format: `odt_...`)
+### 1. Create an API Key
+1. Open http://localhost:8080
+2. Login with `admin` / `admin` then **change the password**
+3. Go to **Administration** → **Access Management** → **Teams**
+4. Click on the **"Administrators"** team
+5. Generate an API key by clicking the **+** on the right of "API Keys"
+6. Copy the key (format: `odt_...`)
 
-### 2. Activer Trivy (analyseur de vulnérabilités)
-1. Allez dans **Administration** → **Analyzers** → **Trivy**
-2. Configurez :
-   - ✅ **Enable Trivy analyzer**
-   - **Base URL**: `http://trivy-server:4954`
-   - **API Token**: (laissez vide)
-   - ✅ **Enable library scanning**
-   - ✅ **Enable OS scanning**
-3. Cliquez **Update**
-4. Redémarrez: `docker restart analyse-sbom-dtrack-apiserver-1`
+### 2. Configure the .env file
 
-## 📤 Upload SBOM
+Copy the `.env.example` file as a template:
 
 ```bash
-python upload_sbom.py chemin/vers/sbom.json VOTRE_CLE_API
+cp .env.example .env
 ```
 
-## 🔍 Vérifier un SBOM
+Edit the `.env` file and configure:
+```
+DEPENDENCY_TRACK_API_KEY=odt_YOUR_API_KEY_HERE
+DEPENDENCY_TRACK_URL=http://localhost:8081
+```
+
+[WARNING] **NEVER commit the `.env` file to git** (it's already in `.gitignore`)
+
+### 3. Enable Trivy (vulnerability analyzer)
+
+**Automatic method (recommended)**:
+```bash
+python3 configure_trivy.py
+```
+
+**Manual method** (if the script fails):
+1. Go to **Administration** → **Analyzers** → **Trivy**
+2. Configure:
+   - [x] **Enable Trivy analyzer**
+   - **Base URL**: `http://trivy-server:4954`
+   - **API Token**: (leave empty)
+   - [x] **Enable library scanning**
+   - [x] **Enable OS scanning**
+3. Click **Update**
+
+## Upload SBOM
+
+```bash
+python upload_sbom.py path/to/sbom.json
+```
+
+The API key and URL are automatically loaded from the `.env` file.
+
+**Note**: Use the **CycloneDX** format for your SBOMs (better compatibility with Dependency-Track)
+
+## Verify an SBOM
 
 ```bash
 python check_sbom.py sbom.json
 ```
 
-## 🗑️ Supprimer un projet
+## Delete a Project
 
 ```bash
-python delete_project.py --list                # Lister tous les projets
-python delete_project.py <project-uuid>        # Supprimer un projet
+python delete_project.py --list                # List all projects
+python delete_project.py <project-uuid>        # Delete a project
 ```
 
-## 📦 Générer des SBOMs
+## Generate SBOMs
+
+Use the **CycloneDX** format (recommended):
 
 ### Android
-
 ```bash
-# ❌ NE PAS FAIRE (génère un SBOM vide)
-syft . -o cyclonedx-json > sbomAndroid.json
-
-# ✅ À FAIRE (génère un SBOM avec les vraies dépendances)
 ./gradlew assembleDebug
-syft app/build/outputs/apk/debug/app-debug.apk -o spdx-json > sbomAndroid.json
-python check_sbom.py sbomAndroid.json
+syft app/build/outputs/apk/debug/app-debug.apk -o cyclonedx-json > sbomAndroid.json
 ```
 
 ### iOS
-
 ```bash
-# Méthode correcte (Podfile.lock présent)
-syft Podfile.lock -o spdx-json > sbomiOS.json
-python check_sbom.py sbomiOS.json
+syft Podfile.lock -o cyclonedx-json > sbomiOS.json
 ```
-
-## 💡 Note importante
-
-Scanner le répertoire racine (`.`) d'un projet Android/iOS **sans build** ne trouve aucune dépendance.
-
-- Syft cherche des **artefacts analysables** (binaires, lockfiles, manifests)
-- Pour **iOS**: `Podfile.lock` existe → Syft trouve les dépendances CocoaPods
-- Pour **Android**: pas de lockfile standard Gradle → Syft ne trouve rien sans APK
-- Scanner juste le code source (`.java`, `.kt`) sans build ne révèle pas les dépendances Maven/Gradle
-
-## 🔒 Analyseurs de vulnérabilités
-
-Ce projet utilise **Trivy** comme analyseur principal :
-- ✅ 100% gratuit et open-source
-- ✅ Aucun compte utilisateur requis
-- ✅ Auto-hébergé (confidentialité des données)
-- ✅ Excellente couverture : OS + bibliothèques (Maven, npm, PyPI, etc.)
-- ✅ Pas de limite de requêtes
-
-
-## Générer des SBOMs 
-
-### Android
-
-```bash
-# ❌ NE PAS FAIRE (génère un SBOM vide)
-syft . -o cyclonedx-json > sbomAndroid.json
-
-# ✅ À FAIRE (génère un SBOM avec les vraies dépendances)
-./gradlew assembleDebug
-syft app/build/outputs/apk/debug/app-debug.apk -o spdx-json > sbomAndroid.json
-python check_sbom.py sbomAndroid.json  
-```
-
-### iOS
-
-```bash
-# Méthode correcte (Podfile.lock présent)
-syft Podfile.lock -o spdx-json > sbomiOS.json
-```
-
-## NB
-
-Scanner le répertoire racine (`.`) d'un projet Android/iOS **sans build** ne trouve aucune dépendance.
-
-- Syft cherche des **artefacts analysables** (binaires, lockfiles, manifests)
-- Pour **iOS**: `Podfile.lock` existe → Syft trouve les dépendances CocoaPods 
-- Pour **Android**: pas de lockfile standard Gradle dans le repo → Syft ne trouve rien 
-- Scanner juste le code source (`.java`, `.kt`) sans build ne révèle pas les dépendances Maven/Gradle
