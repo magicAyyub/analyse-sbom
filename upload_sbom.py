@@ -21,7 +21,7 @@ def upload_sbom(sbom_path, api_key=None, server_url='http://localhost:8081'):
 
     headers = {}
     if api_key:
-        headers['X-API-Key'] = api_key
+        headers['X-Api-Key'] = api_key
     project_name = Path(sbom_path).stem
     data = {
         'projectName': project_name,

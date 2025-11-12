@@ -20,7 +20,7 @@ def list_projects():
     """List all projects"""
     response = requests.get(
         f"{API_URL}/api/v1/project",
-        headers={"X-API-Key": API_KEY}
+        headers={"X-Api-Key": API_KEY}
     )
     
     if response.status_code == 200:
@@ -42,7 +42,7 @@ def delete_project(uuid):
     print(f"[INFO] Deleting project {uuid}...")
     response = requests.delete(
         f'{API_URL}/api/v1/project/{uuid}',
-        headers={'X-API-Key': API_KEY},
+        headers={'X-Api-Key': API_KEY},
         timeout=10
     )
     if response.status_code == 204:
