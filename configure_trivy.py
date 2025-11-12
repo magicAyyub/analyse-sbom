@@ -59,6 +59,11 @@ def configure_trivy():
         },
         {
             "groupName": "scanner",
+            "propertyName": "trivy.api.token",
+            "propertyValue": "not-required"
+        },
+        {
+            "groupName": "scanner",
             "propertyName": "trivy.scanner.scanLibrary",
             "propertyValue": "true"
         },
