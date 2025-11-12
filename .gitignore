@@ -1,0 +1,23 @@
+# Dependency-Track data
+dependency-track/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# SBOM files (uncomment if you want to ignore)
+# *.json
+# *.xml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,58 @@
+volumes:
+  dependency-track:
+  trivy-cache:
+
+services:
+  dtrack-apiserver:
+    image: dependencytrack/apiserver
+    environment:
+      - ALPINE_CORS_ENABLED=true
+      - ALPINE_CORS_ALLOW_ORIGIN=*
+      - ALPINE_CORS_ALLOW_METHODS=GET, POST, PUT, DELETE, OPTIONS
+      - ALPINE_CORS_ALLOW_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count, *
+      - ALPINE_CORS_EXPOSE_HEADERS=Origin, Content-Type, Authorization, X-Requested-With, Content-Length, Accept, Origin, X-Api-Key, X-Total-Count
+      - ALPINE_CORS_ALLOW_CREDENTIALS=true
+      - ALPINE_CORS_MAX_AGE=3600
+    deploy:
+      resources:
+        limits:
+          memory: 12288m
+        reservations:
+          memory: 8192m
+      restart_policy:
+        condition: on-failure
+    ports:
+      - '8081:8080'
+    volumes:
+      - 'dependency-track:/data'
+    restart: unless-stopped
+    networks:
+      - dtrack
+
+  dtrack-frontend:
+    image: dependencytrack/frontend
+    depends_on:
+      - dtrack-apiserver
+    environment:
+      - API_BASE_URL=http://localhost:8081
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - dtrack
+
+  trivy-server:
+    image: aquasec/trivy:latest
+    container_name: trivy-server
+    restart: unless-stopped
+    command: ["server", "--listen", "0.0.0.0:4954"]
+    ports:
+      - "4954:4954"
+    volumes:
+      - trivy-cache:/root/.cache/trivy
+    networks:
+      - dtrack
+
+networks:
+  dtrack:
+    driver: bridge
